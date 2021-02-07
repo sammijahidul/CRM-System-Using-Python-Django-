@@ -17,12 +17,12 @@ def home(request):
     'total_orders': total_orders, 'delivered': delivered,
     'pending': pending}
 
-
     return render(request,'accounts/dashboard.html', context)
 
 def products(request):
     products = Products.objects.all()
     return render(request,'accounts/products.html', {'product': products})
 
-def customer(request):
+def customer(request, new_value):
+    customer = Customer.objects.get(id=new_value)
     return render(request,'accounts/customer.html')
