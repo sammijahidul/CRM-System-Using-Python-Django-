@@ -30,3 +30,9 @@ def customer(request, new_value):
 
     context = {'customer':customer,'orders': orders,'order_count':order_count}
     return render(request,'accounts/customer.html',context)
+
+def createOrder(request):
+
+    context = {}
+
+    return render(request, 'accounts/order_form.html', context)
