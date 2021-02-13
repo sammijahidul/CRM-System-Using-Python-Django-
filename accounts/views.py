@@ -61,5 +61,8 @@ def updateOrder(request, new_value):
 def deleteOrder(request, new_value):
     order = Order.objects.get(id=new_value)
     context = {'item':order}
+    if request.method == 'POST':
+        order.delete()
+        return redirect('/')
 
     return render(request, 'accounts/delete.html',context)

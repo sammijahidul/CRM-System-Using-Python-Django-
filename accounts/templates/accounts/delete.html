@@ -4,7 +4,9 @@
 {% block content %}
 
 <p>Are you sure "{{item}}"?</p>
-<form method="POST">
+<form action="{% url 'delete_order' item.id %}" method="POST">
+
+  {% csrf_token %}
 
   <a href="{% url 'home' %}">Cancel</a>
 
