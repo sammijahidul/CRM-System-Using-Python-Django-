@@ -10,43 +10,53 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.contrib import messages
 
+from django.contrib.auth.decorators import login_required
+
 # Create your views here.
 
 def registerPage(request):
-    form = CreateUserForm()
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        form = CreateUserForm()
+        if request.method == 'POST':
+            form = CreateUserForm(request.POST)
+            if form.is_valid():
+                form.save()
+                user = form.cleaned_data.get('username')
+                messages.success(request, 'Account was created for ' + user)
+                return redirect('login')
 
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
-        if form.is_valid():
-            form.save()
-            user = form.cleaned_data.get('username')
-            messages.success(request, 'Account was created for ' + user)
+        context = {'form':form}
+        return render(request, 'accounts/register.html', context)
 
-            return redirect('login')
-
-    context = {'form':form}
-    return render(request, 'accounts/register.html', context)
 
 def loginPage(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        if request.method == 'POST':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.info(request, 'Username or Password is incorrect')
 
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        context = {}
+        return render(request, 'accounts/login.html', context)
 
-        if user is not None:
-            login(request, user)
-            return redirect('home')
+def logoutUser(request):
+    logout(request)
+    return redirect('login')
 
-
-    context = {}
-
-    return render(request, 'accounts/login.html', context)
+@login_required(login_url='login')
 
 def home(request):
     orders = Order.objects.all()
     customers = Customer.objects.all()
-
     total_customer = customers.count()
     total_orders = orders.count()
     delivered = orders.filter(status='Delivered').count()
@@ -55,12 +65,15 @@ def home(request):
     context = {'orders':orders, 'customers':customers,
     'total_orders': total_orders, 'delivered': delivered,
     'pending': pending}
-
     return render(request,'accounts/dashboard.html', context)
+
+@login_required(login_url='login')
 
 def products(request):
     products = Products.objects.all()
     return render(request,'accounts/products.html', {'product': products})
+
+@login_required(login_url='login')
 
 def customer(request, new_value):
     customer = Customer.objects.get(id=new_value)
@@ -71,6 +84,8 @@ def customer(request, new_value):
 
     context = {'customer':customer,'orders': orders,'order_count':order_count, 'myFilter': myFilter}
     return render(request,'accounts/customer.html',context)
+
+@login_required(login_url='login')
 
 def createOrder(request, new_value):
     OrderForSet = inlineformset_factory(Customer, Order, fields=('product','status'), extra=10 )
@@ -83,10 +98,10 @@ def createOrder(request, new_value):
             formset.save()
             return redirect('/')
 
-
     context = {'formset': formset}
-
     return render(request, 'accounts/order_form.html', context)
+
+@login_required(login_url='login')
 
 def updateOrder(request, new_value):
     order = Order.objects.get(id=new_value)
@@ -99,6 +114,8 @@ def updateOrder(request, new_value):
 
     context ={'form':form,}
     return render(request, 'accounts/order_form.html', context)
+
+@login_required(login_url='login')
 
 def deleteOrder(request, new_value):
     order = Order.objects.get(id=new_value)
