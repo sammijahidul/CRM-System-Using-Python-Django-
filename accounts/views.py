@@ -69,6 +69,10 @@ def home(request):
 
 @login_required(login_url='login')
 
+def userPage(request):
+    context = {}
+    return render(request, 'accounts/user.html', context)
+
 def products(request):
     products = Products.objects.all()
     return render(request,'accounts/products.html', {'product': products})
