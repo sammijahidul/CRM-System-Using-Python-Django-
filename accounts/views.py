@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.forms import inlineformset_factory
 from django.contrib.auth.models import Group
 from .models import *
-from .forms import OrderForm, CreateUserForm
+from .forms import OrderForm, CreateUserForm, CustomerForm
 from .filters import orderFilter
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
@@ -11,8 +11,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .decorators import unauthenticated_user, allowed_users, admin_only
 
-
-# Create your views here.
 
 @unauthenticated_user
 def registerPage(request):
@@ -33,6 +31,7 @@ def registerPage(request):
     context = {'form':form}
     return render(request, 'accounts/register.html', context)
 
+
 @unauthenticated_user
 def loginPage(request):
     if request.method == 'POST':
@@ -48,9 +47,11 @@ def loginPage(request):
     context = {}
     return render(request, 'accounts/login.html', context)
 
+
 def logoutUser(request):
     logout(request)
     return redirect('login')
+
 
 @login_required(login_url='login')
 @admin_only
@@ -66,6 +67,8 @@ def home(request):
     'total_orders': total_orders, 'delivered': delivered,
     'pending': pending}
     return render(request,'accounts/dashboard.html', context)
+
+
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
 def userPage(request):
@@ -79,11 +82,27 @@ def userPage(request):
      'delivered': delivered,'pending': pending}
     return render(request, 'accounts/user.html', context)
 
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['customer'])
+def accountSettings(request):
+    customer = request.user.customer
+    form = CustomerForm(instance=customer)
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, request.FILES,instance=customer)
+        if form.is_valid():
+            form.save()
+            
+    context ={'form':form}
+    return render(request, 'accounts/account_settings.html', context)
+
+
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
 def products(request):
     products = Products.objects.all()
     return render(request,'accounts/products.html', {'product': products})
+
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
@@ -96,6 +115,7 @@ def customer(request, new_value):
 
     context = {'customer':customer,'orders': orders,'order_count':order_count, 'myFilter': myFilter}
     return render(request,'accounts/customer.html',context)
+
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
@@ -113,6 +133,7 @@ def createOrder(request, new_value):
     context = {'formset': formset}
     return render(request, 'accounts/order_form.html', context)
 
+
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
 def updateOrder(request, new_value):
@@ -126,6 +147,7 @@ def updateOrder(request, new_value):
 
     context ={'form':form,}
     return render(request, 'accounts/order_form.html', context)
+
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
